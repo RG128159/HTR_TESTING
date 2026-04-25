@@ -280,18 +280,21 @@ if "Field" in dataframes:
     )
     SAND_NDG = dataframes["Field"][mask].copy() 
 
-    SAND_NDG = SAND_NDG.replace('', np.nan)
-    SAND_NDG = SAND_NDG.dropna(axis=1, how='all')
+    if not SAND_NDG.empty:
+        SAND_NDG = SAND_NDG.replace('', np.nan)
+        SAND_NDG = SAND_NDG.dropna(axis=1, how='all')
     
-    # Remove columns 1, 2, 3, 5 (indices)
-    cols_to_drop = [SAND_NDG.columns[i] for i in [1, 2, 3, 5] if i < len(SAND_NDG.columns)]
-    SAND_NDG = SAND_NDG.drop(columns=cols_to_drop, errors='ignore')
+        # Remove columns 1, 2, 3, 5 (indices)
+        cols_to_drop = [SAND_NDG.columns[i] for i in [1, 2, 3, 5] if i < len(SAND_NDG.columns)]
+        SAND_NDG = SAND_NDG.drop(columns=cols_to_drop, errors='ignore')
     
-    # Rename column 5 to 'Degree of Compaction'
-    if len(SAND_NDG.columns) > 5:
-        SAND_NDG.columns.values[5] = 'Degree of Compaction'
+        # Rename column 5 to 'Degree of Compaction'
+        if len(SAND_NDG.columns) > 5:
+            SAND_NDG.columns.values[5] = 'Degree of Compaction'
 
-    SAND_NDG['Status'] = SAND_NDG.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and float(x) >= 92 else 'FAIL')
+        SAND_NDG['Status'] = SAND_NDG['Degree of Compaction'].apply(
+        lambda x: 'PASS' if pd.notna(x) and float(x) >= 92 else 'FAIL'
+    )
     
 #CORE SRT Frame    
 if "Field" in dataframes:
