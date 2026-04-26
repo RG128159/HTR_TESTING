@@ -6,6 +6,13 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from io import BytesIO
+#import boto3
+#from botocore.exceptions import ClientError
+
+# S3 setup
+#s3 = boto3.client("s3")
+#BUCKET_NAME = "htr-qa-bucket-001"
+#S3_PREFIX = "Summary_Sheets/"
 
 # Function to highlight rows based on Status column
 def highlight_status(row):
@@ -32,6 +39,21 @@ uploaded_files = st.file_uploader(
     type=['xlsx', 'xls'],
     accept_multiple_files=True
 )
+
+# Check if uploaded files exist in S3 bucket, if not upload them
+#if uploaded_files:
+#    for uploaded_file in uploaded_files:
+#        s3_key = S3_PREFIX + uploaded_file.name
+#        try:
+#            s3.head_object(Bucket=BUCKET_NAME, Key=s3_key)
+#        except ClientError as e:
+#            if e.response['Error']['Code'] == '404':
+#                s3.upload_fileobj(
+#                    uploaded_file,
+#                    BUCKET_NAME,
+#                    s3_key
+#                )
+#                st.success(f"Uploaded {uploaded_file.name} to S3")
 
 # Process uploaded files
 dataframes = {}
@@ -171,7 +193,9 @@ if "Field" in dataframes:
     CORE_HSV = CORE_HSV.drop(columns=cols_to_drop, errors='ignore')
     
     # Remove operators from column 4
-    CORE_HSV.iloc[:, 4] = CORE_HSV.iloc[:, 4].astype(str).str.replace(r'[<>=]', '', regex=True)
+    col = CORE_HSV.columns[4]
+    CORE_HSV[col] = (CORE_HSV[col].astype(str).str.replace(r"[<>=]", "", regex=True).str.strip())   
+    CORE_HSV[col] = pd.to_numeric(CORE_HSV[col], errors="coerce")
     
     # Add status column based on column 4 value
     CORE_HSV['Status'] = CORE_HSV.iloc[:, 4].apply(lambda x: 'PASS' if pd.notna(x) and 55 <= float(x) <= 110 else ('CAUTION' if pd.notna(x) and 50 <= float(x) <= 120 else 'FAIL'))
@@ -192,7 +216,9 @@ if "Field" in dataframes:
     SHOULDER_HSV = SHOULDER_HSV.drop(columns=cols_to_drop, errors='ignore')
     
     # Remove operators from column 4
-    SHOULDER_HSV.iloc[:, 4] = SHOULDER_HSV.iloc[:, 4].astype(str).str.replace(r'[<>=]', '', regex=True)
+    col = SHOULDER_HSV.columns[4]
+    SHOULDER_HSV[col] = (SHOULDER_HSV[col].astype(str).str.replace(r"[<>=]", "", regex=True).str.strip())   
+    SHOULDER_HSV[col] = pd.to_numeric(SHOULDER_HSV[col], errors="coerce")
     
     # Add status column based on column 4 value
     SHOULDER_HSV['Status'] = SHOULDER_HSV.iloc[:, 4].apply(lambda x: 'PASS' if pd.notna(x) and 65 <= float(x) <= 200 else 'FAIL')
