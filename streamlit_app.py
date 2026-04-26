@@ -5,6 +5,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import streamlit as st
+from io import BytesIO
 
 # Function to highlight rows based on Status column
 def highlight_status(row):
@@ -588,7 +589,8 @@ def create_excel_download():
     """Create Excel file with all material testing data."""
     from openpyxl.styles import PatternFill
     
-    output = pd.ExcelWriter('Material_Testing_Review.xlsx', engine='openpyxl')
+    output = BytesIO()
+    excel_writer = pd.ExcelWriter(output, engine='openpyxl')
 
     # Dictionary of all dataframes with their sheet names
     sheets_dict = {
@@ -616,13 +618,12 @@ def create_excel_download():
     has_data = False
     for sheet_name, df in sheets_dict.items():
         if not df.empty:
-            df.to_excel(output, sheet_name=sheet_name, index=False)
+            df.to_excel(excel_writer, sheet_name=sheet_name, index=False)
             has_data = True
             
             # Apply formatting based on Status column
-            worksheet = output.sheets[sheet_name]
+            worksheet = excel_writer.sheets[sheet_name]
             if 'Status' in df.columns:
-                status_col_idx = df.columns.get_loc('Status') + 1
                 for row_idx, status_value in enumerate(df['Status'], start=2):
                     if status_value == 'FAIL':
                         for col in worksheet.iter_cols(min_row=row_idx, max_row=row_idx):
@@ -635,16 +636,16 @@ def create_excel_download():
 
     # Add a blank sheet if no data exists
     if not has_data:
-        pd.DataFrame().to_excel(output, sheet_name='Empty', index=False)
+        pd.DataFrame().to_excel(excel_writer, sheet_name='Empty', index=False)
 
-    output.close()
-
-    with open('Material_Testing_Review.xlsx', 'rb') as file:
-        return file.read()
+    excel_writer.close()
+    output.seek(0)
+    return output.getvalue()
 
 excel_data = create_excel_download()
+
 st.download_button(
-    label='📥 Download All Data as Excel',
+    label='📥 Download Review',
     data=excel_data,
     file_name=f'Material_Testing_Review_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
