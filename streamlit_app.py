@@ -36,27 +36,27 @@ uploaded_files = st.file_uploader(
 )
 
 # Upload files to S3
-def upload_to_s3(uploaded_file):
+def upload_to_s3(file_name, file_bytes):
     """Upload file to S3 bucket if it doesn't already exist."""
     s3_client = boto3.client('s3', region_name='us-west-2')
     bucket_name = 'htr-qa-bucket-001'
-    s3_key = f'Summary_Sheets/{uploaded_file.name}'
+    s3_key = f'Summary_Sheets/{file_name}'
     
     try:
         # Check if file already exists in S3
         s3_client.head_object(Bucket=bucket_name, Key=s3_key)
-        st.warning(f"File '{uploaded_file.name}' already exists in S3. See Table Tab for details.")
+        st.warning(f"File '{file_name}' already exists in S3. See Table Tab for details.")
         return False
     except ClientError as e:
         if e.response['Error']['Code'] == '404':
             # File doesn't exist, proceed with upload
             try:
                 s3_client.upload_fileobj(
-                    uploaded_file,
+                    BytesIO(file_bytes),
                     bucket_name,
                     s3_key
                 )
-                st.success(f"File '{uploaded_file.name}' uploaded to S3 successfully.")
+                st.success(f"File '{file_name}' uploaded to S3 successfully.")
                 return True
             except ClientError as upload_error:
                 st.error(f"Error uploading file to S3: {upload_error}")
@@ -69,14 +69,23 @@ def upload_to_s3(uploaded_file):
 # Process uploaded files and upload to S3
 dataframes = {}
 if uploaded_files:
+    # Store file bytes once so the Streamlit UploadedFile is not reused after closing
+    uploaded_file_bytes = {
+        uploaded_file.name: uploaded_file.getvalue()
+        for uploaded_file in uploaded_files
+    }
+
     for uploaded_file in uploaded_files:
-        upload_to_s3(uploaded_file)
+        upload_to_s3(
+            uploaded_file.name,
+            uploaded_file_bytes[uploaded_file.name]
+        )
+
     all_field_data = []
     all_lab_data = []
-    
-    for uploaded_file in uploaded_files:
-        uploaded_file.seek(0)
-        excel_data = pd.ExcelFile(uploaded_file)
+
+    for file_name, file_bytes in uploaded_file_bytes.items():
+        excel_data = pd.ExcelFile(BytesIO(file_bytes))
         sheets_to_import = [
             sheet for sheet in [
                 'Field', 'Lab', 'Field ', 'Lab ',
