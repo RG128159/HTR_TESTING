@@ -6,13 +6,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from io import BytesIO
-#import boto3
-#from botocore.exceptions import ClientError
-
-# S3 setup
-#s3 = boto3.client("s3")
-#BUCKET_NAME = "htr-qa-bucket-001"
-#S3_PREFIX = "Summary_Sheets/"
+import boto3
+from botocore.exceptions import ClientError
 
 # Function to highlight rows based on Status column
 def highlight_status(row):
@@ -40,28 +35,47 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
-# Check if uploaded files exist in S3 bucket, if not upload them
-#if uploaded_files:
-#    for uploaded_file in uploaded_files:
-#        s3_key = S3_PREFIX + uploaded_file.name
-#        try:
-#            s3.head_object(Bucket=BUCKET_NAME, Key=s3_key)
-#        except ClientError as e:
-#            if e.response['Error']['Code'] == '404':
-#                s3.upload_fileobj(
-#                    uploaded_file,
-#                    BUCKET_NAME,
-#                    s3_key
-#                )
-#                st.success(f"Uploaded {uploaded_file.name} to S3")
+# Upload files to S3
+def upload_to_s3(uploaded_file):
+    """Upload file to S3 bucket if it doesn't already exist."""
+    s3_client = boto3.client('s3', region_name='us-west-2')
+    bucket_name = 'htr-qa-bucket-001'
+    s3_key = f'Summary_Sheets/{uploaded_file.name}'
+    
+    try:
+        # Check if file already exists in S3
+        s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+        st.warning(f"File '{uploaded_file.name}' already exists in S3. See Table Tab for details.")
+        return False
+    except ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            # File doesn't exist, proceed with upload
+            try:
+                s3_client.upload_fileobj(
+                    uploaded_file,
+                    bucket_name,
+                    s3_key
+                )
+                st.success(f"File '{uploaded_file.name}' uploaded to S3 successfully.")
+                return True
+            except ClientError as upload_error:
+                st.error(f"Error uploading file to S3: {upload_error}")
+                return False
+        else:
+            st.error(f"Error checking S3 file: {e}")
+            return False
 
-# Process uploaded files
+
+# Process uploaded files and upload to S3
 dataframes = {}
 if uploaded_files:
+    for uploaded_file in uploaded_files:
+        upload_to_s3(uploaded_file)
     all_field_data = []
     all_lab_data = []
     
     for uploaded_file in uploaded_files:
+        uploaded_file.seek(0)
         excel_data = pd.ExcelFile(uploaded_file)
         sheets_to_import = [
             sheet for sheet in [
