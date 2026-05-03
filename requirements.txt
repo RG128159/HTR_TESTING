@@ -3,3 +3,8 @@ pandas
 openpyxl
 io
 boto3
+streamlit-authenticator
+pymysql
+sqlalchemy
+bcrypt
+mysql-connector-python
