@@ -51,11 +51,11 @@ if st.session_state.get("authentication_status"):
     # -----------------------------
     st.title("Lightsail MySQL Viewer (Read-Only)")
 
-    limit = st.number_input("Rows limit", min_value=1, max_value=1000, value=100)
+    #limit = st.number_input("Rows limit", min_value=1, max_value=2500, value=100)
 
     if st.button("Load Table"):
         try:
-            query = f"SELECT * FROM {"Field_Data_tbl"} WHERE 1=1 LIMIT {limit}"
+            query = f"SELECT * FROM Field_Data_tbl WHERE 1=1 LIMIT 5000"
             df = pd.read_sql(query, conn)
             df = df.drop(columns=['ID', 'Date_Reported', 'Report_Number', 'Test_Name'], errors='ignore')
             st.success(f"Loaded {len(df)} rows")
