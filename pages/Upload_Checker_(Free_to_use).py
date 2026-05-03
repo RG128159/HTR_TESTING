@@ -262,11 +262,15 @@ if "Field" in dataframes:
     cols_to_drop = [FORMATION_HSV.columns[i] for i in [1, 2, 3, 5] if i < len(FORMATION_HSV.columns)]
     FORMATION_HSV = FORMATION_HSV.drop(columns=cols_to_drop, errors='ignore')
     
-    # Remove operators from column 4
-    FORMATION_HSV.iloc[:, 4] = FORMATION_HSV.iloc[:, 4].astype(str).str.replace(r'[<>=]', '', regex=True)
-    
-    # Add status column based on column 4 value
-    FORMATION_HSV['Status'] = FORMATION_HSV.iloc[:, 4].apply(lambda x: 'PASS' if pd.notna(x) and float(x) >= 50 else 'FAIL')
+    # Clean and convert Hand Vane Shear Strength column
+    col = FORMATION_HSV.columns[4]
+
+    FORMATION_HSV[col] = (FORMATION_HSV[col].astype(str).str.replace(r"[<>=]", "", regex=True).str.strip())
+
+    FORMATION_HSV[col] = pd.to_numeric(FORMATION_HSV[col], errors="coerce")
+
+    # Add status column
+    FORMATION_HSV["Status"] = FORMATION_HSV[col].apply(lambda x: "PASS" if pd.notna(x) and x >= 50 else "FAIL")
 
 #CORE NDG Frame    
 if "Field" in dataframes:
