@@ -53,11 +53,27 @@ if st.session_state.get("authentication_status"):
 
     #limit = st.number_input("Rows limit", min_value=1, max_value=2500, value=100)
 
+    if "reload_table" not in st.session_state:
+        st.session_state.reload_table = 0
+
     if st.button("Load Table"):
+        st.session_state.reload_table += 1
+
+    if st.session_state.reload_table > 0:
         try:
-            query = f"SELECT * FROM Field_Data_tbl WHERE 1=1 LIMIT 5000"
+            query = "SELECT * FROM Field_Data_tbl WHERE 1=1 LIMIT 5000"
+
+            # Reconnect if connection has dropped
+            if not conn.is_connected():
+                conn.reconnect()
+
             df = pd.read_sql(query, conn)
-            df = df.drop(columns=['ID', 'Date_Reported', 'Report_Number', 'Test_Name'], errors='ignore')
+
+            df = df.drop(
+                columns=['ID', 'Date_Reported', 'Report_Number', 'Test_Name'],
+                errors='ignore'
+            )
+
             st.success(f"Loaded {len(df)} rows")
             st.dataframe(df)
 
