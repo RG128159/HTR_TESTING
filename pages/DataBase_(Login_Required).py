@@ -75,10 +75,87 @@ if st.session_state.get("authentication_status"):
             )
 
             st.success(f"Loaded {len(df)} rows")
-            st.dataframe(df)
+
+            # Dynamic filters
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                test_type_filter = st.multiselect(
+                    "Filter by Test_Type",
+                    options=df['Test_Type'].unique() if 'Test_Type' in df.columns else [],
+                    default=None,
+                    key="test_type_filter"
+                )
+
+            with col2:
+                material_type_filter = st.multiselect(
+                    "Filter by Material_Type",
+                    options=df['Material_Type'].unique() if 'Material_Type' in df.columns else [],
+                    default=None,
+                    key="material_type_filter"
+                )
+
+            with col3:
+                date_tested_filter = st.multiselect(
+                    "Filter by Date_Tested",
+                    options=sorted(pd.to_datetime(df['Date_Tested']).dt.date.unique()) if 'Date_Tested' in df.columns else [],
+                    default=None,
+                    key="date_tested_filter"
+                )
+
+            location_filter = st.radio(
+                "Filter by Location",
+                options=["All", "Core", "Shoulder", "Formation", "Sand"],
+                horizontal=True,
+                key="location_filter"
+            )
+
+            # Apply filters
+            filtered_df = df.copy()
+
+            if test_type_filter:
+                filtered_df = filtered_df[filtered_df['Test_Type'].isin(test_type_filter)]
+
+            if material_type_filter:
+                filtered_df = filtered_df[filtered_df['Material_Type'].isin(material_type_filter)]
+
+            if date_tested_filter:
+                filtered_df = filtered_df[pd.to_datetime(filtered_df['Date_Tested']).isin(date_tested_filter)]
+
+            if location_filter == "Core":
+                filtered_df = filtered_df[
+                    (filtered_df['Location_ID'].str.contains('core', case=False, na=False)) &
+                    (~filtered_df['Location_ID'].str.contains('Formation', case=False, na=False))
+                ]
+            elif location_filter == "Shoulder":
+                filtered_df = filtered_df[
+                    (filtered_df['Location_ID'].str.contains('shoulder', case=False, na=False)) &
+                    (~filtered_df['Location_ID'].str.contains('Formation', case=False, na=False))
+                ]
+            elif location_filter == "Formation":
+                filtered_df = filtered_df[
+                    (filtered_df['Location_ID'].str.contains('formation', case=False, na=False))
+                ]    
+            elif location_filter == "Sand":
+                filtered_df = filtered_df[
+                    (filtered_df['Material_Type'].str.contains('sand', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('0-4', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('brett', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('tarmac', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('kendall', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('blanket', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('drain', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('bkt', case=False, na=False)) |
+                    (filtered_df['Material_Type'].str.contains('FD', case=False, na=False))
+                ]
+            elif location_filter != "All":
+                filtered_df = filtered_df[filtered_df['Location_ID'].str.contains(location_filter, case=False, na=False)]
+
+            st.dataframe(filtered_df)
 
         except Exception as e:
             st.error(f"Query failed: {e}")
+
 else:
     st.title("DataBase")
     st.caption("This page is only accessible to authenticated users. Please log in to view the content.")

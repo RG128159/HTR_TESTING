@@ -183,7 +183,8 @@ if "Lab" in dataframes and 'Triaxial Shear Strength' in dataframes["Lab"].column
     # Remove 'Date Reported'
     CORE_QUT = CORE_QUT.drop(columns=['Date Reported'], errors='ignore')
     
-    CORE_QUT['Status'] = CORE_QUT.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and 55 <= float(x) <= 110 else ('CAUTION' if pd.notna(x) and 50 <= float(x) <= 120 else 'FAIL') if isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.','',1).isdigit()) else 'FAIL')
+    if not CORE_QUT.empty:
+        CORE_QUT['Status'] = CORE_QUT.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and 55 <= float(x) <= 110 else ('CAUTION' if pd.notna(x) and 50 <= float(x) <= 120 else 'FAIL') if isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.','',1).isdigit()) else 'FAIL')
 
 #Shoulder QUT Frame
 if "Lab" in dataframes and 'Triaxial Shear Strength' in dataframes["Lab"].columns:
@@ -198,7 +199,8 @@ if "Lab" in dataframes and 'Triaxial Shear Strength' in dataframes["Lab"].column
     # Remove 'Date Reported'
     SHOULDER_QUT = SHOULDER_QUT.drop(columns=['Date Reported'], errors='ignore')
     
-    SHOULDER_QUT['Status'] = SHOULDER_QUT.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and 65 <= float(x) <= 200 else 'FAIL')
+    if not SHOULDER_QUT.empty:
+        SHOULDER_QUT['Status'] = SHOULDER_QUT.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and 65 <= float(x) <= 200 else 'FAIL')
     
 #Core HSV Frame
 if "Field" in dataframes:
@@ -222,7 +224,8 @@ if "Field" in dataframes:
     CORE_HSV[col] = pd.to_numeric(CORE_HSV[col], errors="coerce")
     
     # Add status column based on column 4 value
-    CORE_HSV['Status'] = CORE_HSV.iloc[:, 4].apply(lambda x: 'PASS' if pd.notna(x) and 55 <= float(x) <= 110 else ('CAUTION' if pd.notna(x) and 50 <= float(x) <= 120 else 'FAIL'))
+    if not CORE_HSV.empty:
+        CORE_HSV['Status'] = CORE_HSV.iloc[:, 4].apply(lambda x: 'PASS' if pd.notna(x) and 55 <= float(x) <= 110 else ('CAUTION' if pd.notna(x) and 50 <= float(x) <= 120 else 'FAIL'))
 
 #Shoulder HSV Frame    
 if "Field" in dataframes:
@@ -245,7 +248,8 @@ if "Field" in dataframes:
     SHOULDER_HSV[col] = pd.to_numeric(SHOULDER_HSV[col], errors="coerce")
     
     # Add status column based on column 4 value
-    SHOULDER_HSV['Status'] = SHOULDER_HSV.iloc[:, 4].apply(lambda x: 'PASS' if pd.notna(x) and 65 <= float(x) <= 200 else 'FAIL')
+    if not SHOULDER_HSV.empty:
+        SHOULDER_HSV['Status'] = SHOULDER_HSV.iloc[:, 4].apply(lambda x: 'PASS' if pd.notna(x) and 65 <= float(x) <= 200 else 'FAIL')
     
 #Formation HSV Frame
 if "Field" in dataframes:
@@ -270,7 +274,8 @@ if "Field" in dataframes:
     FORMATION_HSV[col] = pd.to_numeric(FORMATION_HSV[col], errors="coerce")
 
     # Add status column
-    FORMATION_HSV["Status"] = FORMATION_HSV[col].apply(lambda x: "PASS" if pd.notna(x) and x >= 50 else "FAIL")
+    if not FORMATION_HSV.empty:
+        FORMATION_HSV["Status"] = FORMATION_HSV[col].apply(lambda x: "PASS" if pd.notna(x) and x >= 50 else "FAIL")
 
 #CORE NDG Frame    
 if "Field" in dataframes:
@@ -324,8 +329,9 @@ if "Field" in dataframes:
     # Rename column 5 to 'Degree of Compaction'
     if len(SHOULDER_NDG.columns) > 5:
         SHOULDER_NDG.columns.values[5] = 'Degree of Compaction'
-        
-    SHOULDER_NDG['Status'] = SHOULDER_NDG.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and float(x) >= 95 else 'FAIL')
+
+    if not SHOULDER_NDG.empty:    
+        SHOULDER_NDG['Status'] = SHOULDER_NDG.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and float(x) >= 95 else 'FAIL')
 
 #SAND NDG Frame    
 if "Field" in dataframes:
@@ -347,9 +353,10 @@ if "Field" in dataframes:
         if len(SAND_NDG.columns) > 5:
             SAND_NDG.columns.values[5] = 'Degree of Compaction'
 
-        SAND_NDG['Status'] = SAND_NDG['Degree of Compaction'].apply(
-        lambda x: 'PASS' if pd.notna(x) and float(x) >= 92 else 'FAIL'
-    )
+        if not SAND_NDG.empty:
+            SAND_NDG['Status'] = SAND_NDG['Degree of Compaction'].apply(
+            lambda x: 'PASS' if pd.notna(x) and float(x) >= 92 else 'FAIL'
+        )
     
 #CORE SRT Frame    
 if "Field" in dataframes:
@@ -404,7 +411,8 @@ if "Field" in dataframes:
     if len(SHOULDER_SRT.columns) > 5:
         SHOULDER_SRT.columns.values[5] = 'Degree of Compaction'
 
-    SHOULDER_SRT['Status'] = SHOULDER_SRT.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and float(x) >= 95 else 'FAIL')
+    if not SHOULDER_SRT.empty:
+        SHOULDER_SRT['Status'] = SHOULDER_SRT.iloc[:, 5].apply(lambda x: 'PASS' if pd.notna(x) and x != '' and float(x) >= 95 else 'FAIL')
 
 ##------------------------------------------ LAB TESTS --------------------------------------------------##
 

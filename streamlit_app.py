@@ -46,10 +46,11 @@ if authentication_status:
         authenticator.logout("Logout", location="sidebar")
 
     # Summary FIRST
-    pg = st.navigation([
+    pages = [
         st.Page("pages/Upload_Checker_(Free_to_use).py", title="Upload Checker"),
         st.Page("pages/DataBase_(Login_Required).py", title="DataBase"),
-    ])
+    ]
+    pg = st.navigation(pages)
     pg.run()
 
 elif authentication_status is False:
